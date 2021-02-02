@@ -3,7 +3,7 @@ library(PlayerRatings)
 library(lubridate)
 library(reshape2)
 
-players <- read_csv("wta_player_db.csv", col_names = T)
+#players <- read_csv("wta_player_db.csv", col_names = T)
 results <- read_csv("wta_results_db.csv", col_names = T)
 
 tours = c("G", "P", "PM", "D", "I", "F", "W")
@@ -36,17 +36,13 @@ tail(res)
 elo_ratings <- elo(res, init = 1500, kfac = 30, history = TRUE)
 
 elo_recent <- as_tibble(elo_ratings$ratings) %>% 
-  filter(Lag < 50, Rating >= 1600)
+  filter(Lag < 50, Rating >= 1600, Games >= 30)
 
 elo_recent
 
-# elo_1600 <- elo_recent %>% 
-#   filter(Lag < 50, Rating >= 1600)
-# elo_1600
-
 view(elo_recent)
 
-write_csv(elo_recent, "/home/magljo/sports_analysis/wta_tennis/elo1600.csv")
+write_csv(elo_recent, "elo_ratings_jan21.csv")
 
 elo_timeline <- as_tibble(elo_ratings$history, rownames = "Player")
 view(head(elo_timeline))
@@ -58,59 +54,37 @@ elo_timeline
 
 colnames(elo_timeline)
 
-pl = elo_recent$Player[1:15]
+pl = elo_recent$Player[1:20]
 
 elo_timeline_current <- elo_timeline %>% 
   filter(Player %in% pl) %>% 
-  select(Player, `1400.Rating`:`1548.Rating`)
+  select(Player, ends_with("Rating")) %>% 
+  select(Player, last_col(offset = 99):last_col())
 
 elo_timeline_current
 
-temp <- melt(elo_timeline_current, id.vars = "Player")
+#temp <- melt(elo_timeline_current, id.vars = "Player")
+temp <- melt(elo_timeline_current, id.vars = "Player",variable.name = "Time", 
+             value.name = "Rating")
+
 
 head(temp, 10)
 tail(temp, 10)
 
 unique(temp$Player)
+
 ggplot(temp,
-       aes(x = variable,
-           y = value,
+       aes(x = Time,
+           y = Rating,
            col = Player,
            group = Player
        )) +
-  labs(title = "Player Ratings Through Time - Top 15", 
+  labs(title = "Player Ratings Through Time - Current Top 20 Rated Players by ELO", 
        x = "Time", y = "Rating") +
   scale_x_discrete(labels = NULL) +
   ylim(1600,2200) +
+  geom_hline(yintercept = c(1800, 2000), col = "grey", lty = 2) +
   geom_line() +
-  facet_wrap(~ Player, nrow = 3)
+  geom_smooth(lty = 2, lwd = 0.5, col = "red") +
+  facet_wrap(~ Player, nrow = 4)
 
-
-#pl = c("Ashleigh Barty", "Naomi Osaka", "Simona Halep", "Aryna Sabalenka", "Bianca Andreescu")
-
-# plot(elo_ratings, players = pl, t0 = 300)
-# legend("topleft", legend = pl, lwd = 3, lty = 1:5, cex = 0.4, y.intersp = 0.2, col = 1:5,
-#        text.width = 12)
-# text(c(300,350,400,450, 500), rep(1500, 5), 
-#      c("2017","2018","2019","2020", "2021"))
-# 
-# dim(elo_timeline)
-
-# temp <- melt(elo_1600[elo_1600$Player %in% pl,], id.vars = "Player")
-# 
-# head(temp, 10)
-# tail(temp, 10)
-# 
-# unique(temp$Player)
-# ggplot(temp,
-#        aes(x = variable,
-#            y = value,
-#            col = Player,
-#            group = Player
-#            )) +
-#   labs(title = "Player ELO Ratings 2017 to January 2021", 
-#        x = "Time", y = "Rating") +
-#   scale_x_discrete(labels = NULL) + 
-#   scale_y_continuous(breaks = seq(1500, 2100, by = 50)) +
-#   geom_line()
-#   
