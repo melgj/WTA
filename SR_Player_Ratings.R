@@ -70,10 +70,10 @@ write_csv(sr_current, "SR_ratings_jan21.csv")
 sr_timeline <- as_tibble(srtng$history, rownames = "Player")
 #view(head(sr_timeline))
 
-### Create variable holding a list of current top 15 ranked players
+### Create variable holding a list of current top 20 ranked players
 top <- sr_current$Player[1:20]
 
-### filter historical ratings: Top 15 players, retain only Player and 
+### filter historical ratings: Top 20 players, retain only Player and 
 ### 100 most recent Period rating columns
 
 sr_timeline_current <- sr_timeline %>% 
@@ -91,7 +91,7 @@ temp <- melt(sr_timeline_current, id.vars = "Player",variable.name = "Time",
 head(temp, 10)
 tail(temp, 10)
 
-### Create ggplot of top 15 players Rating variations through time
+### Create ggplot of top 20 players Rating variations through time
 
 unique(temp$Player)
 
