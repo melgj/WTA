@@ -8,7 +8,14 @@ library(reshape2)
 ### import results from csv (Jan 1976 to Jan 2021)
 
 #players <- read_csv("wta_player_db.csv", col_names = T)
-results <- read_csv("wta_results_db.csv", col_names = T)
+r7621 <- read_csv("wta_results_db.csv", col_names = T)
+r21 <- read_csv("wta_matches_2021.csv", col_names = T)
+
+colnames(r21) <- str_to_lower(colnames(r21))
+
+r21$tourney_date <- ymd(r21$tourney_date)
+
+results <- bind_rows(r7621,r21)
 
 summary(results)
 
@@ -18,22 +25,27 @@ tours = c("G", "P", "PM", "I", "F", "W", "D")
 results <- results %>% 
  filter(tourney_level %in% tours)
 
-### Select earliest date in dataframe as base date
+### Select earliest date in data frame as base date
 base_date <- min(results$tourney_date)
+max(results$tourney_date)
 
 head(results)
 tail(results)
 
 ### Sort by Tournament Date
-results_sorted <- results %>% 
-  arrange(tourney_date)
+unique(results$round)
 
-### Create column which holds week value (from base date)
+rndLevels <- c("BR","RR","R128","R64","R32","R16","QF","SF","F")
+
+results$round <- factor(results$round, rndLevels, ordered = T)
+
+### Sort by Tournament Date
+results_sorted <- results %>% 
+  arrange(tourney_date, round)
+
 results_sorted$period <- lubridate::interval(base_date, results_sorted$tourney_date) %/% weeks(1)+1
 
-is.numeric(results_sorted$period)
-
-### Create dataframe of four columns for use by PlayerRatings 'steph' funaction to calculate ratings
+### Create data frame of four columns for use by PlayerRatings 'steph' function to calculate ratings
 res <- results_sorted %>% 
   select(period, winner_name, loser_name)
 
@@ -46,9 +58,7 @@ tail(res)
 
 srtng <- steph(res, init = c(1500,300), history = TRUE)
 
-# elo_recent <- as_tibble(elo_ratings$ratings)
-
-### Convert steph ratings to dataframe
+### Convert steph ratings to data frame
 
 sr_df <- as_tibble(srtng$ratings)
 
@@ -56,17 +66,17 @@ head(sr_df)
 tail(sr_df)   
 
 ### Remove players absent from tour for approximately 1 year+, players 
-### with low ratings and and players with insufficient games.
+### with low ratings and players with insufficient games.
 
 sr_current <- sr_df %>% 
   filter(Lag < 50, Rating >= 1600, Games >= 30)
 
-#view(head(sr_current,30))
+view(head(sr_current,30))
 
 ### Write ratings to csv file
-write_csv(sr_current, "SR_ratings_jan21.csv")
+write_csv(sr_current, "wta_SR_ratings_jan21.csv")
 
-### Convert historical ratings to dataframe
+### Convert historical ratings to data frame
 sr_timeline <- as_tibble(srtng$history, rownames = "Player")
 #view(head(sr_timeline))
 
@@ -84,7 +94,7 @@ sr_timeline_current <- sr_timeline %>%
   
 sr_timeline_current
 
-### Reshape dataframe for plotting
+### Reshape data frame for plotting
 temp <- melt(sr_timeline_current, id.vars = "Player",variable.name = "Time", 
              value.name = "Rating")
 

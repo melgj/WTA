@@ -5,20 +5,33 @@ library(scoring)
 
 
 #players <- read_csv("wta_player_db.csv", col_names = T)
-results <- read_csv("wta_results_db.csv", col_names = T)
+r7621 <- read_csv("wta_results_db.csv", col_names = T)
+r21 <- read_csv("wta_matches_2021.csv", col_names = T)
 
-tours = c("G", "P", "PM", "I", "W", "F", "D")
+colnames(r21) <- str_to_lower(colnames(r21))
+
+r21$tourney_date <- ymd(r21$tourney_date)
+
+results <- bind_rows(r7621,r21)
+
+tours = c("G", "P", "PM", "I", "F", "W", "D")
 
 results <- results %>% 
-  filter(tourney_level %in% tours, year(tourney_date) >= 2011)
+  filter(tourney_level %in% tours, year(tourney_date) >= 2000)
 
 base_date <- min(results$tourney_date)
 
 head(results)
 tail(results)
 
+unique(results$round)
+
+rndLevels <- c("RR","R128","R64","R32","R16","QF","SF","F")
+
+results$round <- factor(results$round, rndLevels, ordered = T)
+
 results_sorted <- results %>% 
-  arrange(tourney_date)
+  arrange(tourney_date, round)
 
 results_sorted$period <- lubridate::interval(base_date, results_sorted$tourney_date) %/% weeks(1)+1
 
@@ -30,9 +43,9 @@ res$result <- 1
 head(res)
 tail(res) 
 
-train <- res[res$period <= 208,]
-test <- res[res$period > 208 & res$period <= 364,]
-valid <- res[res$period > 365,]
+train <- res[res$period <= 500,]
+test <- res[res$period > 500 & res$period <= 800,]
+valid <- res[res$period > 800,]
 
 sRat <- steph(train, init = c(1500,300), history = TRUE)
 
