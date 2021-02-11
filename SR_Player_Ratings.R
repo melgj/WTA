@@ -23,7 +23,7 @@ summary(results)
 tours = c("G", "P", "PM", "I", "F", "W", "D")
 
 results <- results %>% 
- filter(tourney_level %in% tours)
+ filter(tourney_level %in% tours, year(tourney_date) >= 2000)
 
 ### Select earliest date in data frame as base date
 base_date <- min(results$tourney_date)
@@ -114,8 +114,8 @@ ggplot(temp,
   labs(title = "Player Ratings Through Time - Current Top 20 Rated Players (Stephenson ELO Variant)", 
        x = "Time", y = "Rating") +
   scale_x_discrete(labels = NULL) +
-  ylim(1600,2200) +
-  geom_hline(yintercept = c(1800, 2000), col = "grey", lty = 2) +
+  ylim(1600,2100) +
+  geom_hline(yintercept = c(1700, 1800, 1900, 2000), col = "grey", lty = 2) +
   geom_line() +
   geom_smooth(lty = 2, lwd = 0.5, col = "red") +
   facet_wrap(~ Player, nrow = 4)
