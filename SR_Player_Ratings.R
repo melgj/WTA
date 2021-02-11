@@ -10,14 +10,7 @@ library(plotly)
 ### import results from csv (Jan 1976 to Jan 2021)
 
 #players <- read_csv("wta_player_db.csv", col_names = T)
-r7621 <- read_csv("wta_results_db.csv", col_names = T)
-r21 <- read_csv("wta_matches_2021.csv", col_names = T)
-
-colnames(r21) <- str_to_lower(colnames(r21))
-
-r21$tourney_date <- ymd(r21$tourney_date)
-
-results <- bind_rows(r7621,r21)
+results <- read_csv("wta_results_db_feb21.csv", col_names = T)
 
 summary(results)
 
