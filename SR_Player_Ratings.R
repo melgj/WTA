@@ -4,6 +4,8 @@ library(tidyverse)
 library(PlayerRatings)
 library(lubridate)
 library(reshape2)
+library(plotly)
+
 
 ### import results from csv (Jan 1976 to Jan 2021)
 
@@ -105,7 +107,7 @@ tail(temp, 10)
 
 unique(temp$Player)
 
-ggplot(temp,
+wtaPlot <- ggplot(temp,
        aes(x = Time,
            y = Rating,
            col = Player,
@@ -119,7 +121,10 @@ ggplot(temp,
   geom_line() +
   geom_smooth(lty = 2, lwd = 0.5, col = "red") +
   facet_wrap(~ Player, nrow = 4)
-  
+
+wtaPlot
+
+ggplotly(wtaPlot)  
   
   
   
