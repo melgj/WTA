@@ -5,20 +5,34 @@ library(PlayerRatings)
 library(lubridate)
 library(reshape2)
 library(plotly)
+library(RPostgres)
+library(DBI)
 
+username <- readline(prompt = "Enter postgresql Username: ")
+dbpw <- readline(prompt = "Enter postgresql password: ")
 
-### import results from csv (Jan 1976 to Jan 2021)
+con <- dbConnect(RPostgres::Postgres(), dbname = 'wta',
+                 host = 'localhost',
+                 port = 5432,
+                 user = username,
+                 password = dbpw)
 
-#players <- read_csv("wta_player_db.csv", col_names = T)
-results <- read_csv("wta_results_db_feb21.csv", col_names = T)
+qry <- "SELECT * from wta_results 
+          where extract(year from tourney_date) >= 2000"
 
-summary(results)
+dbListFields(con, "wta_results")
+
+results <- as_tibble(dbGetQuery(con, qry))
+
+dbDisconnect(con)
+
+head(results)
 
 ### filter matches by valid tour levels (ignore exhibitions etc.)
-tours = c("G", "P", "PM", "I", "F", "W", "D")
+tour_levels = c("G", "P", "PM", "I", "F", "W", "D")
 
 results <- results %>% 
- filter(tourney_level %in% tours, year(tourney_date) >= 2000)
+ filter(tourney_level %in% tour_levels, year(tourney_date) >= 2000)
 
 ### Select earliest date in data frame as base date
 base_date <- min(results$tourney_date)
@@ -27,10 +41,9 @@ max(results$tourney_date)
 head(results)
 tail(results)
 
-### Sort by Tournament Date
 unique(results$round)
 
-rndLevels <- c("BR","RR","R128","R64","R32","R16","QF","SF","F")
+rndLevels <- c("RR","R128","R64","R32","R16","QF","BR","SF","F")
 
 results$round <- factor(results$round, rndLevels, ordered = T)
 
@@ -64,7 +77,7 @@ tail(sr_df)
 ### with low ratings and players with insufficient games.
 
 sr_current <- sr_df %>% 
-  filter(Lag < 50, Rating >= 1600, Games >= 30)
+  filter(Lag < 20, Rating >= 1600, Games >= 30)
 
 view(head(sr_current,30))
 
@@ -103,7 +116,7 @@ unique(temp$Player)
 wtaPlot <- ggplot(temp,
        aes(x = Time,
            y = Rating,
-           col = Player,
+           #col = Player,
            group = Player
            )) +
   labs(title = "Player Ratings Through Time - Current Top 20 Rated Players (Stephenson ELO Variant)", 
@@ -111,13 +124,13 @@ wtaPlot <- ggplot(temp,
   scale_x_discrete(labels = NULL) +
   ylim(1600,2100) +
   geom_hline(yintercept = c(1700, 1800, 1900, 2000), col = "grey", lty = 2) +
-  geom_line() +
-  geom_smooth(lty = 2, lwd = 0.5, col = "red") +
+  geom_line(col = "blue") +
+  geom_smooth(lty = 2, lwd = 0.2, col = "red") +
   facet_wrap(~ Player, nrow = 4)
 
 wtaPlot
 
-ggplotly(wtaPlot)  
+ggplotly(wtaPlot, tooltip = c("Player","Rating"))
   
   
   
